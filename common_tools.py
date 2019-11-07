@@ -193,3 +193,68 @@ def master_estimator(imgs,filters,path,width=10,mbias=False,bimgs=None,bpath=Non
     return median_arr, std_arr
 
 
+from IPython.display import HTML
+import random
+
+def hide_toggle(for_next=False,ttext="Code"):
+    this_cell = """$('div.cell.code_cell.rendered.selected')"""
+    next_cell = this_cell + '.next()'
+
+    toggle_text = ttext  # text shown on toggle link
+    target_cell = this_cell  # target cell to control with toggle
+    js_hide_current = ''  # bit of JS to permanently hide code in current cell (only when toggling next cell)
+
+    if for_next:
+        target_cell = next_cell
+        toggle_text += ' next cell'
+        js_hide_current = this_cell + '.find("div.input").hide();'
+
+    js_f_name = 'code_toggle_{}'.format(str(random.randint(1,2**64)))
+
+    html = """
+        <script>
+            function {f_name}() {{
+                {cell_selector}.find('div.input').toggle();
+            }}
+
+            {js_hide_current}
+        </script>
+
+        <a href="javascript:{f_name}()">{toggle_text}</a>
+    """.format(
+        f_name=js_f_name,
+        cell_selector=target_cell,
+        js_hide_current=js_hide_current, 
+        toggle_text=toggle_text
+    )
+
+    return HTML(html)
+
+
+def plotimg(img,sig=3,title="",cb=True,report=True):
+    mini =np.mean(img)-sig*np.std(img)
+    maxi = np.mean(img)+sig*np.std(img)
+    plt.figure(figsize=(14,8))
+    plt.imshow(img,vmin=mini,vmax=maxi,cmap="viridis")
+    if cb:
+        plt.colorbar();
+    plt.title(title);
+    if report:
+        print(np.mean(img),np.median(img),np.std(img))
+    
+def plothist(img,title="",bins=10000,sig=1,nfig=True,label="",report=True):
+    m = np.mean(img)
+    s = np.std(img)
+    hist, edge = np.histogram(img,bins=bins)
+    if nfig:
+        plt.figure(figsize=(14,8))
+    plt.plot(edge[1:],hist,label=label)
+    plt.xlim([m-(sig*s),m+(sig*s)]);
+    plt.title(title);
+    plt.legend();
+    if report:
+        print(m,np.median(img),s)
+    
+
+
+
