@@ -149,21 +149,28 @@ def apply_filters(imgs,filters):
     return imgs
 
 
-def master_mean(imgs,filters,path,mbias=False,bimgs=None,bpath=None):
+def master_mean(imgs,filters,path,sbias=False,bimgs=None,bpath=None,mbias=None,imsize=(4453,6665)):
+    
     fimgs = apply_filters(imgs,filters)
-    sum_arr = np.zeros((4453,6665))
+    sum_arr = np.zeros(imsize)
+    
     for img in fimgs:
         with fits.open(path + img) as hdul:
             sum_arr += hdul[0].data
-        if mbias:
+            
+        if sbias:
             sbias = get_sorted_bias(img,bimgs,2)
             sum_arr -= (fits.getdata(bpath + sbias[0]) + fits.getdata(bpath + sbias[1]))/2
-
+            
+        if mbias is not None:
+            sum_arr -= mbias
+            
     mean_arr = sum_arr/len(fimgs)
     return mean_arr
 
 
-def master_estimator(imgs,filters,path,width=10,mbias=False,bimgs=None,bpath=None):
+def master_estimator(imgs,filters,path,width=10,sbias=False,bimgs=None,bpath=None,mbias=None):
+    
     mean_arr = []
     median_arr = []
     fimgs = apply_filters(imgs,filters)
@@ -172,13 +179,21 @@ def master_estimator(imgs,filters,path,width=10,mbias=False,bimgs=None,bpath=Non
         ims = []
         for img in fimgs[width*i:width*(i+1)]:
             with fits.open(path + img) as hdul:
-                if mbias:
+                if sbias:
                     sum_arr = np.zeros((4453,6665))
                     sbias = get_sorted_bias(img,bimgs,2)
                     sum_arr += hdul[0].data
                     sum_arr -= (fits.getdata(bpath + sbias[0]) + fits.getdata(bpath + sbias[1]))/2
                     ims.append(sum_arr)
                     del sum_arr
+                    
+                elif mbias is not None:
+                    sum_arr = np.zeros((4453,6665))
+                    sum_arr += hdul[0].data
+                    sum_arr -= mbias
+                    ims.append(sum_arr)
+                    del sum_arr
+                    
                 else:
                     ims.append(hdul[0].data)
 
